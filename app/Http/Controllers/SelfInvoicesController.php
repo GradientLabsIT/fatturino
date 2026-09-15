@@ -359,9 +359,17 @@ class SelfInvoicesController extends Controller
     {
         $base = SelfInvoice::query()->whereYear('date', $fiscalYear);
 
+        $unpaidInvoices = (clone $base)
+            ->where('payment_status', PaymentStatus::Unpaid)
+            ->get();
+
         return [
             'total_count' => (clone $base)->count(),
             'total_gross' => (int) (clone $base)->sum('total_gross'),
+            'draft_count' => (clone $base)->where('status', InvoiceStatus::Draft)->count(),
+            'unpaid_count' => $unpaidInvoices->count(),
+            'unpaid_amount' => (int) $unpaidInvoices->sum(fn ($invoice) => max(0, $invoice->net_due - $invoice->total_paid)),
+            'overdue_count' => $unpaidInvoices->filter(fn ($invoice) => $invoice->isOverdue())->count(),
         ];
     }
 
