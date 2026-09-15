@@ -15,6 +15,7 @@ use App\Http\Controllers\OpenApiSettingsController;
 use App\Http\Controllers\OpenApiWebhookController;
 use App\Http\Controllers\ProformaInvoicesController;
 use App\Http\Controllers\PurchaseInvoicesController;
+use App\Http\Controllers\ReceiptsController;
 use App\Http\Controllers\SalesInvoicesController;
 use App\Http\Controllers\SelfInvoicesController;
 use App\Http\Controllers\SequencesController;
@@ -84,6 +85,21 @@ Route::middleware('auth')->group(function () {
     Route::delete('/sell-invoices/{invoice}/payments/{payment}', [SalesInvoicesController::class, 'deletePayment'])
         ->whereNumber('payment')
         ->name('sell-invoices.delete-payment');
+
+    // Corrispettivi
+    Route::get('/receipts', [ReceiptsController::class, 'index'])->name('receipts.index')->defaults('title', 'Corrispettivi');
+    Route::get('/receipts/create', [ReceiptsController::class, 'create'])->name('receipts.create')
+        ->defaults('title', 'Nuovo Corrispettivo')
+        ->defaults('breadcrumbs', [['label' => 'Corrispettivi', 'url' => '/receipts'], ['label' => 'Nuovo']]);
+    Route::post('/receipts', [ReceiptsController::class, 'store'])->name('receipts.store');
+    Route::get('/receipts/{receipt}/edit', [ReceiptsController::class, 'edit'])->name('receipts.edit')
+        ->defaults('title', 'Modifica Corrispettivo')
+        ->defaults('breadcrumbs', [['label' => 'Corrispettivi', 'url' => '/receipts'], ['label' => 'Modifica']]);
+    Route::put('/receipts/{receipt}', [ReceiptsController::class, 'update'])->name('receipts.update');
+    Route::delete('/receipts/{receipt}', [ReceiptsController::class, 'destroy'])->name('receipts.destroy');
+    Route::post('/receipts/import', [ReceiptsController::class, 'import'])->name('receipts.import');
+    Route::post('/receipts/{receipt}/submit', [ReceiptsController::class, 'submit'])->name('receipts.submit');
+    Route::post('/receipts/{receipt}/sync', [ReceiptsController::class, 'sync'])->name('receipts.sync');
 
     // Purchase Invoices
     Route::get('/purchase-invoices', [PurchaseInvoicesController::class, 'index'])->name('purchase-invoices.index')->defaults('title', 'Fatture di Acquisto');

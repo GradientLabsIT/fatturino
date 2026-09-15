@@ -21,6 +21,7 @@
     import CaretDown from 'phosphor-svelte/lib/CaretDown'
     import BookOpenText from 'phosphor-svelte/lib/BookOpenText'
     import TerminalWindow from 'phosphor-svelte/lib/TerminalWindow'
+    import Receipt from 'phosphor-svelte/lib/Receipt'
 
     let {
         sidebarOpen = $bindable(false),
@@ -48,6 +49,7 @@
         Briefcase,
         ClipboardText,
         TerminalWindow,
+        Receipt,
     }
 
     let openSections = $state({})
