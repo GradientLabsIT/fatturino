@@ -51,6 +51,7 @@
                 title: 'Vendite',
                 items: [
                     { label: 'Fatture', path: '/sell-invoices', icon: 'FileText' },
+                    { label: 'Corrispettivi', path: '/receipts', icon: 'Receipt' },
                     { label: 'Proforma', path: '/proforma', icon: 'FileDashed' },
                     { label: 'Note di credito', path: '/credit-notes', icon: 'ArrowUUpLeft' },
                 ]

@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\FiscalDocument;
+use App\Models\Receipt;
 use App\Services\PostHogTelemetryService;
 use App\Settings\CompanySettings;
 use Carbon\Carbon;
@@ -41,7 +42,10 @@ class HandleInertiaRequests extends Middleware
     {
         $fiscalYear = (int) session('fiscal_year', now()->year);
 
-        $minDate = FiscalDocument::withoutGlobalScopes()->min('date');
+        $minDate = collect([
+            FiscalDocument::withoutGlobalScopes()->min('date'),
+            Receipt::query()->min('date'),
+        ])->filter()->min();
         $minYear = $minDate ? (int) Carbon::parse($minDate)->year : now()->year;
         $availableYears = range(now()->year, $minYear);
         $fiscalRegime = null;
