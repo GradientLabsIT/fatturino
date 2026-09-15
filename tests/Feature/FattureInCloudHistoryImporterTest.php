@@ -65,8 +65,8 @@ test('imports FIC history without calling any send endpoint and remains idempote
     });
 
     $importer = app(FattureInCloudHistoryImporter::class);
-    $first = $importer->importYear('secret', 1, 2026, false);
-    $second = $importer->importYear('secret', 1, 2026, false);
+    $first = $importer->importYear('secret', 1, 2026, false, false);
+    $second = $importer->importYear('secret', 1, 2026, false, false);
 
     expect($first['created'])->toBe(2)
         ->and($second['created'])->toBe(0)

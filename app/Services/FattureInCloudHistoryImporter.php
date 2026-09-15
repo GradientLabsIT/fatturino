@@ -36,8 +36,14 @@ class FattureInCloudHistoryImporter
      *
      * @return array<string, int>
      */
-    public function importYear(string $token, int $companyId, int $year, bool $downloadFiles = true, bool $dryRun = false): array
-    {
+    public function importYear(
+        string $token,
+        int $companyId,
+        int $year,
+        bool $downloadPdf = true,
+        bool $downloadXml = true,
+        bool $dryRun = false,
+    ): array {
         $this->stats = [
             'found' => 0,
             'created' => 0,
@@ -75,11 +81,11 @@ class FattureInCloudHistoryImporter
         }
 
         foreach ($issued as $document) {
-            $this->importDocument($document, true, $downloadFiles);
+            $this->importDocument($document, true, $downloadPdf, $downloadXml);
         }
 
         foreach ($received as $document) {
-            $this->importDocument($document, false, $downloadFiles);
+            $this->importDocument($document, false, $downloadPdf, false);
         }
 
         return $this->stats;
@@ -108,7 +114,7 @@ class FattureInCloudHistoryImporter
         return $documents;
     }
 
-    private function importDocument(array $source, bool $issued, bool $downloadFiles): void
+    private function importDocument(array $source, bool $issued, bool $downloadPdf, bool $downloadXml): void
     {
         $externalId = (string) $source['id'];
         $existing = FiscalDocument::query()
@@ -117,8 +123,8 @@ class FattureInCloudHistoryImporter
             ->first();
 
         if ($existing) {
-            if ($downloadFiles) {
-                $this->fillMissingFiles($existing, $source, $issued);
+            if ($downloadPdf || $downloadXml) {
+                $this->fillMissingFiles($existing, $source, $issued, $downloadPdf, $downloadXml);
             }
             $this->stats['skipped']++;
 
@@ -135,8 +141,8 @@ class FattureInCloudHistoryImporter
             return $document->fresh();
         });
 
-        if ($downloadFiles) {
-            $this->fillMissingFiles($document, $source, $issued);
+        if ($downloadPdf || $downloadXml) {
+            $this->fillMissingFiles($document, $source, $issued, $downloadPdf, $downloadXml);
         }
 
         $this->stats['created']++;
@@ -356,8 +362,13 @@ class FattureInCloudHistoryImporter
         return Contact::query()->create($attributes);
     }
 
-    private function fillMissingFiles(FiscalDocument $document, array $source, bool $issued): void
-    {
+    private function fillMissingFiles(
+        FiscalDocument $document,
+        array $source,
+        bool $issued,
+        bool $downloadPdf,
+        bool $downloadXml,
+    ): void {
         $category = match ($document->type) {
             'sales' => 'sales',
             'credit_note' => 'credit-notes',
@@ -366,7 +377,7 @@ class FattureInCloudHistoryImporter
         };
         $filename = preg_replace('/[^A-Za-z0-9_.-]/', '_', $document->number) ?: 'fic-'.$source['id'];
 
-        if (! $document->pdf_path) {
+        if ($downloadPdf && ! $document->pdf_path) {
             $pdfUrl = $issued ? ($source['url'] ?? null) : ($source['attachment_url'] ?? data_get($source, 'attachments.0.download_url'));
             if ($pdfUrl) {
                 try {
@@ -381,7 +392,11 @@ class FattureInCloudHistoryImporter
             }
         }
 
-        if ($issued && ! $document->xml_path && ($source['e_invoice'] ?? false)) {
+        if ($downloadXml
+            && $issued
+            && ! $document->xml_path
+            && ($source['e_invoice'] ?? false)
+            && ($source['ei_status'] ?? null) !== 'not_sent') {
             try {
                 $response = $this->api->withHeaders(['Accept' => 'text/xml'])
                     ->get($this->baseUrl."/issued_documents/{$source['id']}/e_invoice/xml");

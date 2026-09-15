@@ -11,6 +11,8 @@ class ImportFattureInCloudHistory extends Command
         {--company= : ID azienda Fatture in Cloud}
         {--year= : Anno da importare}
         {--skip-files : Non scaricare PDF e XML}
+        {--skip-pdf : Non scaricare PDF}
+        {--skip-xml : Non scaricare XML}
         {--dry-run : Leggi API e mostra conteggio senza scrivere}';
 
     protected $description = 'Importa storico Fatture in Cloud via API senza inviare documenti a SDI';
@@ -28,11 +30,13 @@ class ImportFattureInCloudHistory extends Command
         }
 
         try {
+            $skipFiles = (bool) $this->option('skip-files');
             $stats = $importer->importYear(
                 $token,
                 $companyId,
                 $year,
-                ! (bool) $this->option('skip-files'),
+                ! $skipFiles && ! (bool) $this->option('skip-pdf'),
+                ! $skipFiles && ! (bool) $this->option('skip-xml'),
                 (bool) $this->option('dry-run'),
             );
         } catch (\Throwable $exception) {
